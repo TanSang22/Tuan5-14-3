@@ -4,8 +4,18 @@ let userController = require('../controllers/users')
 let { RegisterValidator, validatedResult } = require('../utils/validator')
 let bcrypt = require('bcrypt')
 let jwt = require('jsonwebtoken')
+let fs = require('fs')
+let path = require('path')
 const { check } = require('express-validator')
 const { checkLogin } = require('../utils/authHandler')
+
+const PRIVATE_KEY_PATH = path.join(__dirname, '..', 'keys', 'private.key')
+let privateKey;
+try {
+  privateKey = fs.readFileSync(PRIVATE_KEY_PATH, 'utf8')
+} catch (e) {
+  console.error('Unable to read private key for JWT signing:', e.message)
+}
 
 router.post('/register', RegisterValidator, validatedResult, async function (req, res, next) {
     let { username, password, email } = req.body;
@@ -27,11 +37,19 @@ router.post('/login', async function (req, res, next) {
         if (bcrypt.compareSync(password, user.password)) {
             user.loginCount = 0;
             await user.save();
-            let token = jwt.sign({
-                id: user._id,
-            }, 'secret', {
-                expiresIn: '1h'
-            })
+            if (!privateKey) {
+                return res.status(500).send({ message: 'JWT private key not available' });
+            }
+            let token = jwt.sign(
+                {
+                    id: user._id,
+                },
+                privateKey,
+                {
+                    algorithm: 'RS256',
+                    expiresIn: '1h'
+                }
+            )
             res.send(token)
         } else {
             user.loginCount++;
