@@ -26,6 +26,7 @@ app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/products', require('./routes/products'))
 app.use('/api/v1/categories', require('./routes/categories'))
 app.use('/api/v1/roles', require('./routes/roles'))
+app.use('/api/v1/inventory', require('./routes/inventory'))
 mongoose.connect(
 "mongodb+srv://admin123:123456Z@cluster0.qm4lxjn.mongodb.net/?appName=Cluster0"
 );
